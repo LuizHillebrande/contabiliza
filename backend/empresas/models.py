@@ -12,10 +12,10 @@ class Certificado(models.Model):
     Empresa,
     on_delete=models.CASCADE,
     related_name="certificados"
-    )   
+    )   #Da a opcao da empresa ter varios certificados, antigos e vencidos.
 
     arquivo = models.FileField(upload_to="certificados/")
-    senha = models.CharField(max_length=255)
+    senha = models.CharField(max_length=255) #posteriormente criptogragar
 
     validade_inicio = models.DateTimeField()
     validade_fim = models.DateTimeField()

@@ -10,3 +10,14 @@ class EmpresaSerializer(ModelSerializer):
             'razao_social',
             'cnpj',
         ]
+
+    def validate_cnpj(self, value):
+        # remove qualquer caractere não numérico
+        cnpj = re.sub(r"\D", "", value)
+
+        if len(cnpj) != 14:
+            raise serializers.ValidationError(
+                "CNPJ deve conter exatamente 14 dígitos."
+            )
+
+        return cnpj

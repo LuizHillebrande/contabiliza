@@ -7,3 +7,4 @@ from .serializers import TarefaSerializer
 class TarefaViewSet(ModelViewSet):
     queryset = Tarefas.objects.all()
     serializer_class = TarefaSerializer
+
