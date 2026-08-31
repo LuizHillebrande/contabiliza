@@ -1,5 +1,6 @@
-from .models import Certificado
 from rest_framework.serializers import ModelSerializer
+from .models import Certificado
+
 
 class CertificadoSerializer(ModelSerializer):
     class Meta:
@@ -7,10 +8,14 @@ class CertificadoSerializer(ModelSerializer):
         fields = [
             'id',
             'empresa',
-            'arquivo',
-            'validade_inicio',
-            'validade_fim',
-            'numero_serie',
-            'ativo',
+            'subject_cn',
+            'serial_number',
+            'original_filename',
+            'valid_from',
+            'valid_until',
+            'is_active',
+            'uploaded_by',
+            'created_at',
+            'updated_at',
         ]
 #poderia usar ALL para retornar tudo, mas por boas práticas faz-se assim.

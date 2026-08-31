@@ -1,7 +1,8 @@
+import re
+
+from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 from .models import Empresa
-
-
 class EmpresaSerializer(ModelSerializer):
     class Meta:
         model = Empresa
@@ -9,6 +10,7 @@ class EmpresaSerializer(ModelSerializer):
             'id',
             'razao_social',
             'cnpj',
+            'ativo',
         ]
 
     def validate_cnpj(self, value):

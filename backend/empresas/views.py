@@ -1,11 +1,7 @@
-from rest_framework.viewsets import ModelViewSet
-
-from .models import Empresa, Certificado
-from .certificado_serializer import CertificadoSerializer
-from .empresa_serializer import EmpresaSerializer
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+
 from .models import Empresa, Certificado
 from .empresa_serializer import EmpresaSerializer
 from .certificado_serializer import CertificadoSerializer
