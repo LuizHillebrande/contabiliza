@@ -13,4 +13,5 @@ class TarefaSerializer(ModelSerializer): ##como se fosse DTO do java, serve p re
             'reponsavel_tarefa',
             'observacoes',
             'status_tarefa',
+            'ativo',
         ]
