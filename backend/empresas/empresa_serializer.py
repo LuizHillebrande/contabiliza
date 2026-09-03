@@ -12,6 +12,7 @@ class EmpresaSerializer(ModelSerializer):
             'cnpj',
             'ativo',
         ]
+        read_only_fields = ["ativo"]
 
     def validate_cnpj(self, value):
         # remove qualquer caractere não numérico
