@@ -11,8 +11,10 @@ class EmpresaSerializer(ModelSerializer):
             'razao_social',
             'cnpj',
             'ativo',
+            'regime',
+            'data_importacao',
         ]
-        read_only_fields = ["ativo"]
+        read_only_fields = ["ativo", "data_importacao"] #n permite q o usuario ative a tarefa manualmente pelo frontend 
 
     def validate_cnpj(self, value):
         # remove qualquer caractere não numérico
@@ -21,6 +23,10 @@ class EmpresaSerializer(ModelSerializer):
         if len(cnpj) != 14:
             raise serializers.ValidationError(
                 "CNPJ deve conter exatamente 14 dígitos."
+            )
+        if not value.isdigit():
+            raise serializers.ValidationError(
+                "CNPJ deve conter apenas dígitos."
             )
 
         return cnpj

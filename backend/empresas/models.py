@@ -6,6 +6,8 @@ class Empresa(models.Model):
     razao_social = models.CharField(max_length=255)
     cnpj = models.CharField(max_length=14, unique=True)
     ativo = models.BooleanField(default=True)
+    regime = models.CharField(max_length=255) #quero q seja string sem opcoes, pode digitar qualquer coisa
+    data_importacao = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.razao_social

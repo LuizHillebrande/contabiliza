@@ -32,7 +32,8 @@ def importar_empresas_excel(arquivo_excel):
         empresa, criada = Empresa.objects.update_or_create(
             cnpj=cnpj_limpo,
             defaults={
-                "razao_social": razao_social
+                "razao_social": razao_social,
+                "regime": "Não informado",
             }
         )
 
