@@ -11,6 +11,7 @@ class EmpresaSerializer(ModelSerializer):
             'razao_social',
             'cnpj',
             'ativo',
+            'regime',
         ]
         #read_only_fields = ["ativo"] desativei pois fiz a reativacao de empresas
 

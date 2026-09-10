@@ -3,10 +3,21 @@ from django.conf import settings
 from django.utils import timezone
 
 class Empresa(models.Model):
+    REGIME_CHOICES = [
+        ("SIMPLES_NACIONAL", "Simples Nacional"),
+        ("LUCRO_PRESUMIDO", "Lucro Presumido"),
+        ("LUCRO REAL", "Lucro Real"),
+        ("MEI", "MEI"),
+        ("OUTROS","OUTROS"),
+    ]
     razao_social = models.CharField(max_length=255)
     cnpj = models.CharField(max_length=14, unique=True)
     ativo = models.BooleanField(default=True)
-    regime = models.CharField(max_length=255) #quero q seja string sem opcoes, pode digitar qualquer coisa
+    regime = models.CharField(
+        max_length=40,
+        choices=REGIME_CHOICES,
+        default="MEI"
+    )
     data_importacao = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
