@@ -1,29 +1,26 @@
-import re
-
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 from .models import Empresa
+from br_cpf_cnpj import is_valid_cnpj
+
+
 class EmpresaSerializer(ModelSerializer):
     class Meta:
         model = Empresa
         fields = [
-            'id',
-            'razao_social',
-            'cnpj',
-            'ativo',
-            'regime',
+            "id",
+            "razao_social",
+            "cnpj",
+            "ativo",
+            "regime",
         ]
-        #read_only_fields = ["ativo"] desativei pois fiz a reativacao de empresas
 
     def validate_cnpj(self, value):
-        # remove qualquer caractere não numérico
-        cnpj = re.sub(r"\D", "", value)
+        cnpj = value.strip()
 
-        if len(cnpj) != 14:
+        if not is_valid_cnpj(cnpj):
             raise serializers.ValidationError(
-                "CNPJ deve conter exatamente 14 dígitos."
+                "CNPJ inválido."
             )
 
         return cnpj
-
-    #fazer validacao numérica de CNPJ
