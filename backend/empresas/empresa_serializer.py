@@ -24,3 +24,4 @@ class EmpresaSerializer(ModelSerializer):
             )
 
         return cnpj
+        
