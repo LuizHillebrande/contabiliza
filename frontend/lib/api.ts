@@ -277,7 +277,28 @@ export async function importarEmpresas(arquivo: File) {
   return parseResponse<{
     mensagem: string;
     empresas: Empresas[];
+    erros?: string[];
   }>(response);
+}
+
+export async function baixarModeloExcelEmpresas(): Promise<void> {
+  const response = await fetch(`${API_URL}/empresas/modelo-excel/`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Não foi possível baixar o modelo Excel.");
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "modelo_importacao_empresas.xlsx";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 //importar certificado A1 (.pfx / .p12)

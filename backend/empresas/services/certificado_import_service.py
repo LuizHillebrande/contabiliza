@@ -208,7 +208,7 @@ def _salvar_certificado(
             ),
             cnpj=material.cnpj,
             ativo=True,
-            regime="Não informado",
+            regime="OUTROS",
         )
 
         empresa_criada = True

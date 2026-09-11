@@ -18,6 +18,7 @@ const emptyValues: TarefaPayload = {
   reponsavel_tarefa: "",
   observacoes: "",
   status_tarefa: "PENDENTE",
+  ativo: true,
 };
 
 export default function TarefaForm({
@@ -36,6 +37,7 @@ export default function TarefaForm({
       reponsavel_tarefa: String(formData.get("reponsavel_tarefa") ?? ""),
       observacoes: String(formData.get("observacoes") ?? ""),
       status_tarefa: String(formData.get("status_tarefa") ?? "PENDENTE") as Tarefa["status_tarefa"],
+      ativo: initialValues?.ativo ?? true,
     };
 
     await onSubmit(payload);

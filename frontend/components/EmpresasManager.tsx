@@ -5,6 +5,7 @@ import EmpresaTable from "@/app/empresas/EmpresaTable";
 import {
   type Certificado,
   type Empresas,
+  baixarModeloExcelEmpresas,
   createEmpresa,
   importarCertificado,
   importarEmpresas,
@@ -266,11 +267,26 @@ export default function EmpresasManager({
   async function handleImportar(arquivo: File) {
     try {
       const data = await importarEmpresas(arquivo);
-      alert(data.mensagem);
+      const extras =
+        data.erros && data.erros.length > 0
+          ? `\n\nAvisos:\n${data.erros.slice(0, 8).join("\n")}`
+          : "";
+      alert(`${data.mensagem}${extras}`);
       window.location.reload();
     } catch (error) {
       console.error(error);
-      alert("Erro ao importar empresas.");
+      const mensagem =
+        error instanceof Error ? error.message : "Erro ao importar empresas.";
+      alert(mensagem);
+    }
+  }
+
+  async function handleBaixarModelo() {
+    try {
+      await baixarModeloExcelEmpresas();
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao baixar o modelo Excel.");
     }
   }
 
@@ -393,6 +409,15 @@ export default function EmpresasManager({
           >
             <span aria-hidden="true">👤+</span>
             Adicionar nova empresa
+          </button>
+
+          <button
+            type="button"
+            className="empresas-action-btn"
+            onClick={handleBaixarModelo}
+          >
+            <span aria-hidden="true">⇩</span>
+            Baixar modelo Excel
           </button>
 
           <label className="empresas-action-btn" style={{ cursor: "pointer" }}>

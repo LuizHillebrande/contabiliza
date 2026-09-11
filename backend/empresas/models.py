@@ -6,9 +6,9 @@ class Empresa(models.Model):
     REGIME_CHOICES = [
         ("SIMPLES_NACIONAL", "Simples Nacional"),
         ("LUCRO_PRESUMIDO", "Lucro Presumido"),
-        ("LUCRO REAL", "Lucro Real"),
+        ("LUCRO_REAL", "Lucro Real"),
         ("MEI", "MEI"),
-        ("OUTROS","OUTROS"),
+        ("OUTROS", "Outros"),
     ]
     razao_social = models.CharField(max_length=255)
     cnpj = models.CharField(max_length=14, unique=True)
