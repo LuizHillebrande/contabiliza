@@ -40,7 +40,7 @@ class EmpresaViewSet(ModelViewSet):
                 status=400,
             )
 
-        mensagem = f"{len(empresas)} empresa(s) importada(s)."
+        mensagem = f"{len(empresas)} empresa(s) importada(s) com sucesso."
         if erros:
             mensagem += f" {len(erros)} linha(s) com erro."
 

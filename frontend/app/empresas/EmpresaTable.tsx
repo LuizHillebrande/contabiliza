@@ -2,6 +2,7 @@
 
 import ScrollableTablePanel from "@/components/ScrollableTablePanel";
 import { type Empresas } from "@/lib/api";
+import { formatarCnpj } from "@/lib/cnpj";
 
 type EmpresaTableProps = {
   empresas: Empresas[];
@@ -42,9 +43,13 @@ export default function EmpresaTable({
       <table className="empresas-table">
         <thead>
           <tr>
-            <th>Empresa</th>
+            <th>
+              Empresa <span style={{ color: "red" }}>*</span>
+            </th>
             <th>Data da importação</th>
-            <th>Regime</th>
+            <th>
+              Regime <span style={{ color: "red" }}>*</span>
+            </th>
             <th>Certificado</th>
             <th>Ações</th>
           </tr>
@@ -57,7 +62,7 @@ export default function EmpresaTable({
                 {empresa.razao_social}
                 <br />
                 <br />
-                <p>CNPJ:{empresa.cnpj}</p>
+                <p>CNPJ: {formatarCnpj(empresa.cnpj)}</p>
               </td>
               <td>{formatarData(empresa.data_importacao)}</td>
               <td>{empresa.regime?.trim() ? empresa.regime : "—"}</td>

@@ -84,7 +84,7 @@ def importar_certificado(
                 mensagem=(
                     "Senha não encontrada no nome "
                     "do arquivo. Use, por exemplo, "
-                    "'empresa {senha 1234}.pfx'."
+                    "'empresa senha 1234.pfx'."
                 ),
             )
 
@@ -198,6 +198,16 @@ def _salvar_certificado(
     )
 
     empresa_criada = False
+
+    if empresa is not None and not empresa.ativo:
+        result.add_item(
+            arquivo=arquivo,
+            status="erro",
+            mensagem="Empresa existe porém está inativa.",
+            cnpj=material.cnpj,
+            razao_social=empresa.razao_social,
+        )
+        return
 
     if not empresa:
 

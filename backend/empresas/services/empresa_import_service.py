@@ -76,12 +76,24 @@ def importar_empresas_excel(arquivo_excel):
             )
             continue
 
-        empresa, criada = Empresa.objects.update_or_create(
+        existente = Empresa.objects.filter(cnpj=cnpj_limpo).first()
+        if existente is not None:
+            if not existente.ativo:
+                erros.append(
+                    f"Linha {indice}: empresa existe porém está inativa "
+                    f"(CNPJ {cnpj_limpo})."
+                )
+            else:
+                erros.append(
+                    f"Linha {indice}: empresa já existe (CNPJ {cnpj_limpo})."
+                )
+            continue
+
+        empresa = Empresa.objects.create(
+            razao_social=razao_social,
             cnpj=cnpj_limpo,
-            defaults={
-                "razao_social": razao_social,
-                "regime": regime,
-            },
+            regime=regime,
+            ativo=True,
         )
 
         empresas_importadas.append({
@@ -89,7 +101,7 @@ def importar_empresas_excel(arquivo_excel):
             "razao_social": empresa.razao_social,
             "cnpj": empresa.cnpj,
             "regime": empresa.regime,
-            "criada": criada,
+            "criada": True,
         })
 
     return {

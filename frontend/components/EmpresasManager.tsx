@@ -13,6 +13,7 @@ import {
   updateEmpresa,
   reativarEmpresa,
 } from "@/lib/api";
+import { formatarCnpj, somenteDigitosCnpj } from "@/lib/cnpj";
 
 type EmpresasManagerProps = {
   empresas: Empresas[];
@@ -172,7 +173,7 @@ export default function EmpresasManager({
     try {
       const payload = {
         razao_social: razaoSocial,
-        cnpj: cnpj.replace(/\D/g, ""),
+        cnpj: somenteDigitosCnpj(cnpj),
         regime: regime.trim(),
         ativo: empresaEmEdicao?.ativo ?? true,
       };
@@ -198,10 +199,14 @@ export default function EmpresasManager({
       fecharModal();
     } catch (error) {
       console.error(error);
+      const detalhe =
+        error instanceof Error && error.message
+          ? error.message
+          : "Erro desconhecido.";
       alert(
-        empresaEmEdicao
-          ? "Erro ao editar empresa."
-          : "Erro ao criar empresa."
+        (empresaEmEdicao
+          ? "Erro ao editar empresa:\n"
+          : "Erro ao criar empresa:\n") + detalhe
       );
     }
   }
@@ -209,7 +214,7 @@ export default function EmpresasManager({
   function handleEditar(empresa: Empresas) {
     setEmpresaEmEdicao(empresa);
     setRazaoSocial(empresa.razao_social);
-    setCnpj(String(empresa.cnpj ?? ""));
+    setCnpj(formatarCnpj(empresa.cnpj));
     setRegime(empresa.regime ?? "");
     setModalAberto(true);
   }
@@ -525,7 +530,7 @@ export default function EmpresasManager({
 
             <div className="empresas-modal-field">
               <label htmlFor="empresa-razao">
-                Razão Social <span className="required-mark">*</span>
+                Razão Social <span style={{ color: "red" }}>*</span>
               </label>
               <input
                 id="empresa-razao"
@@ -539,21 +544,23 @@ export default function EmpresasManager({
 
             <div className="empresas-modal-field">
               <label htmlFor="empresa-cnpj">
-                CNPJ <span className="required-mark">*</span>
+                CNPJ <span style={{ color: "red" }}>*</span>
               </label>
               <input
                 id="empresa-cnpj"
                 type="text"
-                placeholder="CNPJ"
+                placeholder="00.000.000/0000-00"
                 value={cnpj}
                 required
-                onChange={(event) => setCnpj(event.target.value)}
+                inputMode="numeric"
+                maxLength={18}
+                onChange={(event) => setCnpj(formatarCnpj(event.target.value))}
               />
             </div>
 
             <div className="empresas-modal-field">
               <label htmlFor="empresa-regime">
-                Regime <span className="required-mark">*</span>
+                Regime <span style={{ color: "red" }}>*</span>
               </label>
               <select
                 id="empresa-regime"

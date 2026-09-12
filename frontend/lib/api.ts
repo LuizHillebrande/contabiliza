@@ -61,6 +61,12 @@ async function parseResponse<T>(response: Response): Promise<T> {
         detalhe = String(body.detail);
       } else if (body?.mensagem) {
         detalhe = String(body.mensagem);
+        // Import Excel: { mensagem, erros: ["Linha 2: CNPJ inválido..."] }
+        if (Array.isArray(body.erros) && body.erros.length > 0) {
+          detalhe += "\n" + body.erros.map(String).join("\n");
+        }
+      } else if (Array.isArray(body?.erros) && body.erros.length > 0) {
+        detalhe = body.erros.map(String).join("\n");
       } else if (body?.arquivo) {
         // DRF: { arquivo: ["Envie um certificado..."] }
         const msgs = Array.isArray(body.arquivo)

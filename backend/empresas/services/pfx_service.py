@@ -24,8 +24,14 @@ class PfxMaterial:
     valid_until: datetime | None
 
 
-_SENHA_NO_NOME = re.compile(
+_SENHA_COM_CHAVES = re.compile(
     r"\{senha\s+([^}]+)\}",
+    re.IGNORECASE,
+)
+
+# Ex.: 'empresa senha 1231.pfx' → captura '1231' (sem a extensão)
+_SENHA_SEM_CHAVES = re.compile(
+    r"(?:^|[\s_\-])senha\s+(\S+?)(?=\s*\.(?:pfx|p12)\b|\s|$)",
     re.IGNORECASE,
 )
 
@@ -34,16 +40,26 @@ _CNPJ_DIGITS = re.compile(r"\d{14}")
 
 def extract_password_from_filename(filename: str) -> tuple[str | None, str]:
     """
-    Ex.: 'empresa {senha 1234}.pfx' → ('1234', 'empresa .pfx')
+    Aceita:
+      - 'empresa {senha 1234}.pfx'
+      - 'empresa senha 1231.pfx'
     Retorna (senha|None, nome sem o trecho da senha).
     """
-    match = _SENHA_NO_NOME.search(filename)
+    match = _SENHA_COM_CHAVES.search(filename)
+    pattern = _SENHA_COM_CHAVES
+
+    if not match:
+        match = _SENHA_SEM_CHAVES.search(filename)
+        pattern = _SENHA_SEM_CHAVES
 
     if not match:
         return None, filename
 
     senha = match.group(1).strip()
-    nome_limpo = (_SENHA_NO_NOME.sub("", filename)).strip()
+    # Remove extensão do token se o regex pegou junto (ex.: '1231.pfx')
+    senha = re.sub(r"\.(?:pfx|p12)$", "", senha, flags=re.IGNORECASE)
+
+    nome_limpo = pattern.sub(" ", filename)
     nome_limpo = re.sub(r"\s+\.", ".", nome_limpo)
     nome_limpo = re.sub(r"\s{2,}", " ", nome_limpo).strip()
 
