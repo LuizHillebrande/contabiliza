@@ -10,6 +10,7 @@ from django.conf import settings
 
 
 def _fernet() -> Fernet:
+    # chave vem do settings; senha/pfx nunca ficam em texto puro no banco
     """
     Chave estável derivada de CERTIFICATE_FERNET_KEY (se existir)
     ou de SECRET_KEY do Django.
@@ -21,10 +22,12 @@ def _fernet() -> Fernet:
 
 
 def encrypt_bytes(data: bytes) -> bytes:
+    # cifra os bytes do arquivo .pfx
     return _fernet().encrypt(data)
 
 
 def encrypt_str(value: str) -> bytes:
+    # cifra a senha do certificado
     return encrypt_bytes(value.encode("utf-8"))
 
 

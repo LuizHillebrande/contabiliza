@@ -11,3 +11,4 @@ class ImportacaoEmpresaSerializer(serializers.Serializer):
             )
 
         return arquivo
+

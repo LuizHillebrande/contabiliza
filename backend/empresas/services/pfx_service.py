@@ -39,6 +39,7 @@ _CNPJ_DIGITS = re.compile(r"\d{14}")
 
 
 def extract_password_from_filename(filename: str) -> tuple[str | None, str]:
+    # tira a senha do nome do arquivo (com ou sem {})
     """
     Aceita:
       - 'empresa {senha 1234}.pfx'
@@ -56,7 +57,7 @@ def extract_password_from_filename(filename: str) -> tuple[str | None, str]:
         return None, filename
 
     senha = match.group(1).strip()
-    # Remove extensão do token se o regex pegou junto (ex.: '1231.pfx')
+    # tira .pfx se o regex pegou junto
     senha = re.sub(r"\.(?:pfx|p12)$", "", senha, flags=re.IGNORECASE)
 
     nome_limpo = pattern.sub(" ", filename)
@@ -118,6 +119,7 @@ def _to_aware(dt: datetime | None) -> datetime | None:
 
 
 def load_pfx(conteudo: bytes, senha: str) -> PfxMaterial:
+    # biblioteca cryptography abre o A1 e devolve os dados do cert
     try:
         _key, cert, _additional = pkcs12.load_key_and_certificates(
             conteudo,
@@ -133,6 +135,7 @@ def load_pfx(conteudo: bytes, senha: str) -> PfxMaterial:
     if cert is None:
         raise PfxError("Nenhum certificado encontrado no arquivo PFX.")
 
+    # daqui sai cnpj, razao, serial e validade pro service salvar
     subject_cn = _subject_cn(cert)
     cnpj = _extract_cnpj(cert)
 

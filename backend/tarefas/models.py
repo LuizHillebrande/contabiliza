@@ -13,7 +13,7 @@ class Tarefas(models.Model):
     nome_tarefa = models.CharField(max_length=255) #identificar quantos caracteres está inserindo.
     prazo_tarefa = models.DateField()
     reponsavel_tarefa = models.CharField(max_length=255, default='nao_atribuido')
-    observacoes = models.CharField(max_length=500, blank=True)
+    observacoes = models.CharField(max_length=500, blank=True) #blank true nao deixa o campo obrigatorio
     status_tarefa = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,

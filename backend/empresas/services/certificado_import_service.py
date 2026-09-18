@@ -19,6 +19,7 @@ from empresas.services.pfx_service import (
 
 @dataclass
 class CertificateImportResult:
+    # contadores + lista de itens pra o front mostrar no alert
     importados: int = 0
     atualizados: int = 0
     erros: int = 0
@@ -61,6 +62,7 @@ def importar_certificado(
     arquivo,
     usuario=None,
 ) -> CertificateImportResult:
+    # regra de negocio do pfx fica AQUI (view so recebe o arquivo)
 
     result = CertificateImportResult()
 
@@ -71,6 +73,7 @@ def importar_certificado(
     )
 
     try:
+        # senha vem do nome: "empresa senha 1234.pfx"
         senha, nome_limpo = (
             extract_password_from_filename(
                 filename
@@ -101,6 +104,7 @@ def importar_certificado(
 
             return result
 
+        # abre o pfx com a senha e tira cnpj / validade / serial
         material = load_pfx(
             conteudo,
             senha,
@@ -130,6 +134,7 @@ def importar_certificado(
 
             return result
 
+        # nao importa certificado ja vencido
         if (
             material.valid_until
             and material.valid_until <= timezone.now()
@@ -144,6 +149,7 @@ def importar_certificado(
 
             return result
 
+        # passou nas validacoes -> grava no banco
         _salvar_certificado(
             material=material,
             conteudo=conteudo,
@@ -155,7 +161,7 @@ def importar_certificado(
         )
 
     except PfxError as exc:
-
+        # senha errada / arquivo corrompido etc
         result.add_item(
             arquivo=filename,
             status="erro",
@@ -173,8 +179,8 @@ def importar_certificado(
             ),
         )
 
-        # não colocamos senha ou conteúdo do PFX
-        # na mensagem/log
+        # nao coloca senha nem bytes do pfx no log
+        # (seguranca)
 
     return result
 
@@ -190,7 +196,9 @@ def _salvar_certificado(
     result: CertificateImportResult,
     arquivo: str,
 ) -> None:
+    # atomic = se der erro no meio, nao salva pela metade
 
+    # relacao 1:N — certificado aponta pra empresa pelo cnpj
     empresa = (
         Empresa.objects
         .filter(cnpj=material.cnpj)
@@ -199,6 +207,7 @@ def _salvar_certificado(
 
     empresa_criada = False
 
+    # inativa: nao importa e nao reativa
     if empresa is not None and not empresa.ativo:
         result.add_item(
             arquivo=arquivo,
@@ -209,6 +218,7 @@ def _salvar_certificado(
         )
         return
 
+    # cnpj novo no banco -> cria empresa automatico
     if not empresa:
 
         empresa = Empresa.objects.create(
@@ -227,8 +237,7 @@ def _salvar_certificado(
         empresa.razao_social = material.razao_social
         empresa.save(update_fields=["razao_social"])
 
-    # verifica se já existe um certificado
-    # com o mesmo CNPJ e serial
+    # mesmo serial ativo = ja ta cadastrado, nao duplica
     existente = (
         Certificado.objects
         .filter(
@@ -252,7 +261,7 @@ def _salvar_certificado(
 
         return
 
-    # desativa o certificado atualmente ativo
+    # so 1 ativo por empresa: desativa o anterior
     Certificado.objects.filter(
         empresa=empresa,
         is_active=True,
@@ -260,6 +269,7 @@ def _salvar_certificado(
         is_active=False
     )
 
+    # pfx e senha vao criptografados (fernet) — nunca texto puro
     Certificado.objects.create(
         empresa=empresa,
         pfx_encrypted=encrypt_bytes(

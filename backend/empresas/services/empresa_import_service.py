@@ -5,7 +5,7 @@ from openpyxl.worksheet.datavalidation import DataValidation
 
 from empresas.models import Empresa
 
-# Valor gravado no banco → rótulo amigável (igual ao select do frontend)
+# mapa codigo do banco -> texto bonito pro excel/front
 REGIME_OPCOES = {
     "SIMPLES_NACIONAL": "Simples Nacional",
     "LUCRO_PRESUMIDO": "Lucro Presumido",
@@ -14,7 +14,7 @@ REGIME_OPCOES = {
     "OUTROS": "Outros",
 }
 
-# Aceita código OU nome (com variações de escrita) → código oficial
+# aceita o que a pessoa digitar no excel e vira o codigo oficial
 REGIME_ALIASES = {
     "SIMPLES_NACIONAL": "SIMPLES_NACIONAL",
     "SIMPLES NACIONAL": "SIMPLES_NACIONAL",
@@ -36,33 +36,37 @@ def normalizar_regime(valor) -> str | None:
     if not texto:
         return None
 
+    # tira espaco sobrando e deixa maiusculo pra achar no dicionario
     chave = re.sub(r"\s+", " ", texto).upper()
     return REGIME_ALIASES.get(chave)
 
 
 def importar_empresas_excel(arquivo_excel):
+    # regra de negocio da importacao excel fica AQUI (nao na view)
     workbook = opx.load_workbook(arquivo_excel)
     sheet = workbook.active
 
     empresas_importadas = []
     erros = []
 
-    # Linha 1 = cabeçalho
-    # Colunas: A=Razão Social | B=CNPJ | C=Regime
+    # pula cabecalho; A=razao | B=cnpj | C=regime
     for indice, linha in enumerate(sheet.iter_rows(min_row=2), start=2):
         razao_social = linha[0].value
         cnpj = linha[1].value
         regime_bruto = linha[2].value
 
+        # linha vazia = ignora
         if not razao_social and not cnpj and not regime_bruto:
             continue
 
+        # campo obrigatorio faltando = erro da linha, segue as outras
         if not razao_social or not cnpj or not regime_bruto:
             erros.append(f"Linha {indice}: preencha razão social, CNPJ e regime.")
             continue
 
         razao_social = str(razao_social).strip()
 
+        # deixa so digitos; cnpj tem que ter 14
         cnpj_limpo = re.sub(r"\D", "", str(cnpj))
         if len(cnpj_limpo) != 14:
             erros.append(f"Linha {indice}: CNPJ inválido ({cnpj}).")
@@ -76,6 +80,7 @@ def importar_empresas_excel(arquivo_excel):
             )
             continue
 
+        # nao atualiza nem reativa: se ja existe, so registra erro
         existente = Empresa.objects.filter(cnpj=cnpj_limpo).first()
         if existente is not None:
             if not existente.ativo:
@@ -89,6 +94,7 @@ def importar_empresas_excel(arquivo_excel):
                 )
             continue
 
+        # so cria se for cnpj novo
         empresa = Empresa.objects.create(
             razao_social=razao_social,
             cnpj=cnpj_limpo,
@@ -104,6 +110,7 @@ def importar_empresas_excel(arquivo_excel):
             "criada": True,
         })
 
+    # view usa isso pra montar a mensagem de sucesso/erro
     return {
         "empresas": empresas_importadas,
         "erros": erros,
@@ -117,6 +124,7 @@ def gerar_modelo_excel_empresas() -> bytes:
     - 1 linha de exemplo
     - dropdown na coluna Regime (Data Validation do Excel)
     """
+    # isso e o arquivo que o botao "baixar modelo" devolve
     workbook = opx.Workbook()
     sheet = workbook.active
     sheet.title = "Empresas"
@@ -125,17 +133,18 @@ def gerar_modelo_excel_empresas() -> bytes:
     sheet["B1"] = "CNPJ"
     sheet["C1"] = "Regime"
 
-    # Exemplo preenchido
+    # exemplo ja preenchido pra pessoa copiar o formato
     sheet["A2"] = "EMPRESA EXEMPLO LTDA"
     sheet["B2"] = "12345678000199"
     sheet["C2"] = "SIMPLES_NACIONAL"
 
-    # Lista oculta com as opções oficiais (códigos do sistema)
+    # aba escondida so com os codigos oficiais do regime
     opcoes_sheet = workbook.create_sheet("opcoes_regime")
     for i, codigo in enumerate(REGIME_OPCOES.keys(), start=1):
         opcoes_sheet.cell(row=i, column=1, value=codigo)
     opcoes_sheet.sheet_state = "hidden"
 
+    # dropdown na coluna C (excel nao deixa digitar qualquer coisa)
     validacao = DataValidation(
         type="list",
         formula1="=opcoes_regime!$A$1:$A$5",
@@ -154,6 +163,7 @@ def gerar_modelo_excel_empresas() -> bytes:
     sheet.column_dimensions["B"].width = 20
     sheet.column_dimensions["C"].width = 22
 
+    # devolve bytes pra view mandar como download
     buffer = io.BytesIO()
     workbook.save(buffer)
     return buffer.getvalue()

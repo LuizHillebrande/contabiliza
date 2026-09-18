@@ -154,6 +154,14 @@ export default function TarefasManager({ initialTarefas }: TarefasManagerProps) 
   }
 
   async function handleReativar(tarefa: Tarefa) {
+    const confirmar = window.confirm(
+      `Deseja reativar a tarefa "${tarefa.nome_tarefa}"?`
+    );
+
+    if (!confirmar) {
+      return;
+    }
+
     setErro(null);
     setCarregando(true);
 

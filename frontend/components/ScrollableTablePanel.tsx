@@ -8,11 +8,7 @@ type ScrollableTablePanelProps = {
   className?: string;
 };
 
-/**
- * Painel de tabela com scroll interno.
- * Navbar e header da página ficam fixos; só o corpo da tabela rola.
- * Reutilize em qualquer tela de listagem.
- */
+
 export default function ScrollableTablePanel({
   children,
   emptyMessage = "Nenhum registro encontrado.",
