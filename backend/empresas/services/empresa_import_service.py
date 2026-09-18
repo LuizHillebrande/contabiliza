@@ -4,6 +4,7 @@ import openpyxl as opx
 from openpyxl.worksheet.datavalidation import DataValidation
 
 from empresas.models import Empresa
+from br_cpf_cnpj import is_valid_cnpj
 
 # mapa codigo do banco -> texto bonito pro excel/front
 REGIME_OPCOES = {
@@ -51,64 +52,69 @@ def importar_empresas_excel(arquivo_excel):
 
     # pula cabecalho; A=razao | B=cnpj | C=regime
     for indice, linha in enumerate(sheet.iter_rows(min_row=2), start=2):
-        razao_social = linha[0].value
-        cnpj = linha[1].value
-        regime_bruto = linha[2].value
+        try:
+            razao_social = linha[0].value
+            cnpj = linha[1].value
+            regime_bruto = linha[2].value
 
-        # linha vazia = ignora
-        if not razao_social and not cnpj and not regime_bruto:
-            continue
+            # linha vazia = ignora
+            if not razao_social and not cnpj and not regime_bruto:
+                continue
 
-        # campo obrigatorio faltando = erro da linha, segue as outras
-        if not razao_social or not cnpj or not regime_bruto:
-            erros.append(f"Linha {indice}: preencha razão social, CNPJ e regime.")
-            continue
+            # campo obrigatorio faltando = erro da linha, segue as outras
+            if not razao_social or not cnpj or not regime_bruto:
+                erros.append(f"Linha {indice}: preencha razão social, CNPJ e regime.")
+                continue
 
-        razao_social = str(razao_social).strip()
+            razao_social = str(razao_social).strip()
 
-        # deixa so digitos; cnpj tem que ter 14
-        cnpj_limpo = re.sub(r"\D", "", str(cnpj))
-        if len(cnpj_limpo) != 14:
-            erros.append(f"Linha {indice}: CNPJ inválido ({cnpj}).")
-            continue
+            # deixa so digitos; mesma validacao matematica do cadastro manual
+            cnpj_limpo = re.sub(r"\D", "", str(cnpj))
+            if not is_valid_cnpj(cnpj_limpo):
+                erros.append(f"Linha {indice}: CNPJ inválido ({cnpj}).")
+                continue
 
-        regime = normalizar_regime(regime_bruto)
-        if not regime:
-            erros.append(
-                f"Linha {indice}: regime inválido ({regime_bruto}). "
-                "Use o menu da planilha modelo."
+            regime = normalizar_regime(regime_bruto)
+            if not regime:
+                erros.append(
+                    f"Linha {indice}: regime inválido ({regime_bruto}). "
+                    "Use o menu da planilha modelo."
+                )
+                continue
+
+            # nao atualiza nem reativa: se ja existe, so registra erro
+            existente = Empresa.objects.filter(cnpj=cnpj_limpo).first()
+            if existente is not None:
+                if not existente.ativo:
+                    erros.append(
+                        f"Linha {indice}: empresa existe porém está inativa "
+                        f"(CNPJ {cnpj_limpo})."
+                    )
+                else:
+                    erros.append(
+                        f"Linha {indice}: empresa já existe (CNPJ {cnpj_limpo})."
+                    )
+                continue
+
+            # so cria se for cnpj novo
+            empresa = Empresa.objects.create(
+                razao_social=razao_social,
+                cnpj=cnpj_limpo,
+                regime=regime,
+                ativo=True,
             )
+
+            empresas_importadas.append({
+                "id": empresa.id,
+                "razao_social": empresa.razao_social,
+                "cnpj": empresa.cnpj,
+                "regime": empresa.regime,
+                "criada": True,
+            })
+        except Exception as exc:
+            # erro inesperado nesta linha nao pode travar o resto da planilha
+            erros.append(f"Linha {indice}: erro ao processar ({exc}).")
             continue
-
-        # nao atualiza nem reativa: se ja existe, so registra erro
-        existente = Empresa.objects.filter(cnpj=cnpj_limpo).first()
-        if existente is not None:
-            if not existente.ativo:
-                erros.append(
-                    f"Linha {indice}: empresa existe porém está inativa "
-                    f"(CNPJ {cnpj_limpo})."
-                )
-            else:
-                erros.append(
-                    f"Linha {indice}: empresa já existe (CNPJ {cnpj_limpo})."
-                )
-            continue
-
-        # so cria se for cnpj novo
-        empresa = Empresa.objects.create(
-            razao_social=razao_social,
-            cnpj=cnpj_limpo,
-            regime=regime,
-            ativo=True,
-        )
-
-        empresas_importadas.append({
-            "id": empresa.id,
-            "razao_social": empresa.razao_social,
-            "cnpj": empresa.cnpj,
-            "regime": empresa.regime,
-            "criada": True,
-        })
 
     # view usa isso pra montar a mensagem de sucesso/erro
     return {

@@ -6,6 +6,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from empresas.models import Empresa, Certificado
+from br_cpf_cnpj import is_valid_cnpj
 from empresas.services.crypto_service import (
     encrypt_bytes,
     encrypt_str,
@@ -110,6 +111,21 @@ def importar_certificado(
             senha,
         )
 
+        # vencimento antes do cnpj — evita mensagem errada em cert vencido
+        if (
+            material.valid_until
+            and material.valid_until <= timezone.now()
+        ):
+            result.add_item(
+                arquivo=filename,
+                status="erro",
+                mensagem="Certificado já está vencido.",
+                cnpj=material.cnpj,
+                razao_social=material.razao_social,
+            )
+
+            return result
+
         if not material.cnpj:
             result.add_item(
                 arquivo=filename,
@@ -121,28 +137,12 @@ def importar_certificado(
 
             return result
 
-        if len(material.cnpj) != 14:
+        # mesma validacao matematica do serializer de cadastro manual
+        if not is_valid_cnpj(material.cnpj):
             result.add_item(
                 arquivo=filename,
                 status="erro",
-                mensagem=(
-                    "CNPJ encontrado no certificado "
-                    "é inválido."
-                ),
-                cnpj=material.cnpj,
-            )
-
-            return result
-
-        # nao importa certificado ja vencido
-        if (
-            material.valid_until
-            and material.valid_until <= timezone.now()
-        ):
-            result.add_item(
-                arquivo=filename,
-                status="erro",
-                mensagem="Certificado já está vencido.",
+                mensagem=f"CNPJ inválido ({material.cnpj}).",
                 cnpj=material.cnpj,
                 razao_social=material.razao_social,
             )
